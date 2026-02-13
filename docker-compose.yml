@@ -1,11 +1,14 @@
-version: '3'
+version: '3.8'
 
 services:
+  # ./gradlew jibDockerBuild
   fake-smtp-server:
     image: gessnerfl/fake-smtp-server:latest
     hostname: "fake-smtp-server"
     restart: always
     environment:
+      # Spring Profile (leer = default, "develop" für Entwicklung)
+      - SPRING_PROFILES_ACTIVE=develop
 #      - FAKESMTP_AUTHENTICATION_USERNAME=myuser
 #      - FAKESMTP_AUTHENTICATION_PASSWORD=mysecretpassword
       - FAKESMTP_WEBAPP_AUTH_USERNAME=myuser

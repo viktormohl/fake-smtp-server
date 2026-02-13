@@ -15,8 +15,31 @@ public interface EmailRepository extends JpaRepository<Email, Long>, JpaSpecific
 
     @Transactional
     @Modifying
-    @Query(value = "DELETE email o WHERE o.id IN ( SELECT i.id FROM email i ORDER BY i.received_on DESC OFFSET ?1)", nativeQuery = true)
+    @Query(value = "DELETE FROM email_content WHERE email IN (SELECT id FROM email ORDER BY received_on DESC OFFSET ?1)", nativeQuery = true)
+    int deleteEmailContentExceedingLimit(int maxNumber);
+
+    @Transactional
+    @Modifying
+    @Query(value = "DELETE FROM email_attachment WHERE email IN (SELECT id FROM email ORDER BY received_on DESC OFFSET ?1)", nativeQuery = true)
+    int deleteEmailAttachmentsExceedingLimit(int maxNumber);
+
+    @Transactional
+    @Modifying
+    @Query(value = "DELETE FROM email_inline_image WHERE email IN (SELECT id FROM email ORDER BY received_on DESC OFFSET ?1)", nativeQuery = true)
+    int deleteEmailInlineImagesExceedingLimit(int maxNumber);
+
+    @Transactional
+    @Modifying
+    @Query(value = "DELETE FROM email WHERE id IN (SELECT id FROM email ORDER BY received_on DESC OFFSET ?1)", nativeQuery = true)
     int deleteEmailsExceedingDateRetentionLimit(int maxNumber);
+
+    @Transactional
+    default int deleteEmailsExceedingDateRetentionLimitWithCascade(int maxNumber) {
+        deleteEmailContentExceedingLimit(maxNumber);
+        deleteEmailAttachmentsExceedingLimit(maxNumber);
+        deleteEmailInlineImagesExceedingLimit(maxNumber);
+        return deleteEmailsExceedingDateRetentionLimit(maxNumber);
+    }
 
     @Transactional
     @Query

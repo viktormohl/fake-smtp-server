@@ -23,10 +23,17 @@ To change configuration parameters the corresponding configuration values have t
 For details check the Spring Boot (http://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#boot-features-external-config)
 and docker documentation (https://docs.docker.com/engine/reference/run/#env-environment-variables).
 
+> [!NOTE]
+> Starting with version 2.6.0 the Docker image is based on `bellsoft/liberica-runtime-container:jdk-25-slim-musl` (Alpaquita Linux with musl libc).
+> This change significantly reduces the image size and improves startup performance.
+
 # Running Fake SMTP Server locally
 
 > [!NOTE]  
-> Starting with version 2.2.0 Java 21 is required to run Fake SMTP Server. 
+> Starting with version 2.6.0 Java 25 is required to run Fake SMTP Server.
+
+> [!NOTE]  
+> Starting with version 2.2.0 Java 21 is required to run Fake SMTP Server.
 
 > [!NOTE]  
 > Starting with version 2.0.0 Java 17 is required to run Fake SMTP Server.
@@ -303,6 +310,12 @@ Documentation of exposed services is available at:
 
 This requires to have docker installed.
 If you need to implement a new feature, you will probably need an correct JDK version setup in an environement.
+
+> [!NOTE]
+> **Build Requirements:**
+> - Java 25 (JDK)
+> - Node.js 24.13.1 (LTS)
+> - npm 11.8.0
 
 ```sh
 sh/dev

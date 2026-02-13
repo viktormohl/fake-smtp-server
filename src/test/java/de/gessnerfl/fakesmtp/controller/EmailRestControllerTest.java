@@ -36,6 +36,8 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import de.gessnerfl.fakesmtp.model.Email;
 import de.gessnerfl.fakesmtp.model.EmailAttachment;
 import de.gessnerfl.fakesmtp.repository.EmailAttachmentRepository;
+import de.gessnerfl.fakesmtp.repository.EmailContentRepository;
+import de.gessnerfl.fakesmtp.repository.EmailInlineImageRepository;
 import de.gessnerfl.fakesmtp.repository.EmailRepository;
 import de.gessnerfl.fakesmtp.service.EmailSseEmitterService;
 import de.gessnerfl.fakesmtp.util.MediaTypeUtil;
@@ -47,6 +49,10 @@ class EmailRestControllerTest {
 	private EmailRepository emailRepository;
 	@Mock
 	private EmailAttachmentRepository emailAttachmentRepository;
+	@Mock
+	private EmailContentRepository emailContentRepository;
+	@Mock
+	private EmailInlineImageRepository emailInlineImageRepository;
 	@Mock
 	private MediaTypeUtil mediaTypeUtil;
 	@Mock
@@ -154,6 +160,8 @@ class EmailRestControllerTest {
 		sut.deleteAllEmails();
 
 		verify(emailAttachmentRepository).deleteAllInBatch();
+		verify(emailContentRepository).deleteAllInBatch();
+		verify(emailInlineImageRepository).deleteAllInBatch();
 		verify(emailRepository).deleteAllInBatch();
 		verify(emailRepository).flush();
 		verifyNoMoreInteractions(emailRepository);

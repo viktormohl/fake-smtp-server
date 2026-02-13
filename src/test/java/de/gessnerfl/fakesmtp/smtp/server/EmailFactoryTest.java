@@ -113,8 +113,8 @@ class EmailFactoryTest {
         assertEquals(now, result.getReceivedOn());
         assertThat(result.getAttachments(), empty());
         assertThat(result.getInlineImages(), hasSize(1));
-        assertEquals(imageBase64, result.getInlineImages().get(0).getData());
-        assertEquals("image/png", result.getInlineImages().get(0).getContentType());
+        assertEquals(imageBase64, result.getInlineImages().getFirst().getData());
+        assertEquals("image/png", result.getInlineImages().getFirst().getContentType());
     }
 
     @Test
@@ -258,6 +258,41 @@ class EmailFactoryTest {
 
     private static ZonedDateTime getUtcNow() {
         return ZonedDateTime.now(ZoneId.of("UTC"));
+    }
+
+    @Test
+    void shouldCorrectlyEncodeBase64DataFromInputStream() throws Exception {
+        // Given: EML file with BASE64 encoded inline image
+        var now = getUtcNow();
+        var testFilename = "mail-with-subect-and-content-type-html-with-inline-image.eml";
+        var data = TestResourceUtil.getTestFileContentBytes(testFilename);
+        var rawData = new RawData(SENDER, RECEIVER, data);
+
+        // Expected BASE64 data (as stored in the EML file, joined without line breaks)
+        var expectedBase64Data = "iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAAAolBMVEUAAAA0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNs0mNuo1pBsAAAANXRSTlMAAQMEBQYHCQsMDQ4PEB0eKi0uOTs8PT5KTGdpa2xzdHuGiKiqq621t7m+xcfO2dze4unt+xTcEm4AAACdSURBVCjPrY/JEsFQFAX7IcQ8xDzPhBiT8/+/ZoFQPAtK72533cWBr8lvZMHPsZQVn7M9nBjbw5Dk3uYPKcgE7z7IQAPTe/UDQx31DaXDsz6WMV0hBUUSk4efJihsJSRFHaiGVx3WoB3pGqR5GmchSXOH9EyKg8IKeLudB5XbK/EiA2BG9zsO2jddt/VYiz7wQ1jb/Yqcb/PrLP/jAkeJUZTlAz/+AAAAAElFTkSuQmCC";
+
+        when(timestampProvider.now()).thenReturn(now);
+
+        // When: Convert the email
+        var result = sut.convert(rawData);
+
+        // Then: Verify BASE64 encoding worked correctly
+        assertThat(result.getInlineImages(), hasSize(1));
+        var inlineImage = result.getInlineImages().getFirst();
+        var actualBase64Data = inlineImage.getData();
+
+        // Verify the BASE64 data matches expected
+        assertEquals(expectedBase64Data, actualBase64Data, "BASE64 encoded data should match expected value");
+
+        // Verify the BASE64 data can be decoded back to binary
+        var decodedBytes = java.util.Base64.getDecoder().decode(actualBase64Data);
+        assertTrue(decodedBytes.length > 0, "Decoded BASE64 data should not be empty");
+
+        // Verify the decoded data starts with PNG magic bytes (for a PNG image)
+        assertEquals((byte) 0x89, decodedBytes[0], "First byte should be PNG magic byte");
+        assertEquals((byte) 0x50, decodedBytes[1], "Second byte should be 'P'");
+        assertEquals((byte) 0x4E, decodedBytes[2], "Third byte should be 'N'");
+        assertEquals((byte) 0x47, decodedBytes[3], "Fourth byte should be 'G'");
     }
 
 }

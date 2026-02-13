@@ -5,5 +5,10 @@ management:
   server:
     port: -1
 
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+
 fakesmtp:
   port: ${random.int[1024,65536]}

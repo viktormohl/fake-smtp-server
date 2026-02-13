@@ -25,6 +25,8 @@ import de.gessnerfl.fakesmtp.model.Email;
 import de.gessnerfl.fakesmtp.model.query.SearchRequest;
 import de.gessnerfl.fakesmtp.model.query.SearchSpecification;
 import de.gessnerfl.fakesmtp.repository.EmailAttachmentRepository;
+import de.gessnerfl.fakesmtp.repository.EmailContentRepository;
+import de.gessnerfl.fakesmtp.repository.EmailInlineImageRepository;
 import de.gessnerfl.fakesmtp.repository.EmailRepository;
 import de.gessnerfl.fakesmtp.service.EmailSseEmitterService;
 import de.gessnerfl.fakesmtp.util.MediaTypeUtil;
@@ -42,6 +44,8 @@ public class EmailRestController {
 
     private final EmailRepository emailRepository;
     private final EmailAttachmentRepository emailAttachmentRepository;
+    private final EmailContentRepository emailContentRepository;
+    private final EmailInlineImageRepository emailInlineImageRepository;
     private final MediaTypeUtil mediaTypeUtil;
     private final ServletContext servletContext;
     private final EmailSseEmitterService emailSseEmitterService;
@@ -49,11 +53,15 @@ public class EmailRestController {
     @Autowired
     public EmailRestController(EmailRepository emailRepository,
             EmailAttachmentRepository emailAttachmentRepository,
+            EmailContentRepository emailContentRepository,
+            EmailInlineImageRepository emailInlineImageRepository,
             MediaTypeUtil mediaTypeUtil,
             ServletContext servletContext,
             EmailSseEmitterService emailSseEmitterService) {
         this.emailRepository = emailRepository;
         this.emailAttachmentRepository = emailAttachmentRepository;
+        this.emailContentRepository = emailContentRepository;
+        this.emailInlineImageRepository = emailInlineImageRepository;
         this.mediaTypeUtil = mediaTypeUtil;
         this.servletContext = servletContext;
         this.emailSseEmitterService = emailSseEmitterService;
@@ -99,6 +107,8 @@ public class EmailRestController {
     @DeleteMapping()
     public void deleteAllEmails() {
         emailAttachmentRepository.deleteAllInBatch();
+        emailContentRepository.deleteAllInBatch();
+        emailInlineImageRepository.deleteAllInBatch();
         emailRepository.deleteAllInBatch();
         emailRepository.flush();
     }

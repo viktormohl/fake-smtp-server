@@ -3,7 +3,6 @@ package de.gessnerfl.fakesmtp.smtp.server;
 import de.gessnerfl.fakesmtp.model.*;
 import de.gessnerfl.fakesmtp.util.TimestampProvider;
 import org.apache.commons.io.IOUtils;
-import org.eclipse.angus.mail.util.BASE64DecoderStream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -135,11 +134,11 @@ public class EmailFactory {
     }
 
     private Optional<String> getMessageContentAsString(Object rawContent) {
-        var content = rawContent instanceof BASE64DecoderStream stream ? readBase64EncodedData(stream) : Objects.toString(rawContent, null);
+        var content = rawContent instanceof java.io.InputStream stream ? readStreamToBase64(stream) : Objects.toString(rawContent, null);
         return Optional.ofNullable(content);
     }
 
-    private String readBase64EncodedData(BASE64DecoderStream stream){
+    private String readStreamToBase64(java.io.InputStream stream){
         try {
             var byteArray = IOUtils.toByteArray(stream);
             return Base64.getEncoder().encodeToString(byteArray);
