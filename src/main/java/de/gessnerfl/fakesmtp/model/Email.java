@@ -18,11 +18,13 @@ public class Email {
     @GeneratedValue(generator = "email_generator")
     private Long id;
 
-    @Column(name = "from_address", length = 255, nullable = false)
+    @Lob
+    @Column(name = "from_address", nullable = false)
     @Basic(optional = false)
     private String fromAddress;
 
-    @Column(name = "to_address", length = 255, nullable = false)
+    @Lob
+    @Column(name = "to_address", nullable = false)
     @Basic(optional = false)
     private String toAddress;
 
@@ -33,7 +35,6 @@ public class Email {
 
     @Column(name = "received_on", nullable = false)
     @Basic(optional = false)
-    @Temporal(TemporalType.TIMESTAMP)
     @JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ss.SSSXXX", timezone="UTC")
     private ZonedDateTime receivedOn;
 
@@ -42,6 +43,7 @@ public class Email {
     @Basic(optional = false)
     private String rawData;
 
+    @Lob
     @Column(name = "message_id", nullable = true)
     @Basic(optional = true)
     private String messageId;

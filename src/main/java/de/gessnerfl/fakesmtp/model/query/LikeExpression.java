@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import jakarta.persistence.criteria.*;
 import jakarta.validation.constraints.NotEmpty;
+import org.hibernate.query.criteria.HibernateCriteriaBuilder;
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 @JsonSerialize
@@ -12,6 +13,6 @@ import jakarta.validation.constraints.NotEmpty;
 public record LikeExpression(@NotEmpty String property, @NotEmpty String value) implements FilterExpression {
     @Override
     public <T> Predicate toPredicate(Root<T> root, CriteriaQuery<?> query, CriteriaBuilder cb) {
-        return cb.like(cb.upper(root.get(property)), "%"+value.toUpperCase()+"%");
+        return ((HibernateCriteriaBuilder) cb).ilike(root.get(property), "%" + value + "%");
     }
 }
