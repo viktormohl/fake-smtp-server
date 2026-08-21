@@ -11,8 +11,11 @@ import de.gessnerfl.fakesmtp.smtp.io.MaxMessageSizeExceededException;
 import de.gessnerfl.fakesmtp.smtp.io.MaxMessageSizeInputStream;
 import de.gessnerfl.fakesmtp.smtp.io.ReceivedHeaderStream;
 import de.gessnerfl.fakesmtp.smtp.server.Session;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DataCommand extends BaseCommand {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DataCommand.class);
     private static final int BUFFER_SIZE = 1024 * 32; // 32k seems reasonable
     private static final String MESSAGE_SIZE_EXCEEDED_RESPONSE = "552 5.3.4 Message size exceeds fixed limit";
 
@@ -43,6 +46,7 @@ public class DataCommand extends BaseCommand {
                 // we might as well relax.
             }
         } catch (final RejectException ex) {
+            LOGGER.warn("Rejected SMTP message from {}: {}", sess.getRemoteAddress(), ex.getErrorResponse());
             if (!drainRemainingData(dataStreamContext.dotTerminatedInputStream())) {
                 sess.quit();
                 return;
@@ -51,6 +55,8 @@ public class DataCommand extends BaseCommand {
             sess.resetMailTransaction();
             return;
         } catch (final MaxMessageSizeExceededException ex) {
+            LOGGER.warn("Rejected SMTP message from {} because it exceeded the configured maximum message size of {} bytes",
+                    sess.getRemoteAddress(), sess.getServer().getMaxMessageSizeInBytes());
             if (!drainRemainingData(dataStreamContext.dotTerminatedInputStream())) {
                 sess.quit();
                 return;

@@ -17,7 +17,8 @@ public class EmailContent extends EmailPart {
     @Basic(optional = false)
     private EmailPartProcessingStatus processingStatus = EmailPartProcessingStatus.AVAILABLE;
 
-    @Column(name = "processing_message", length = 1024)
+    @Lob
+    @Column(name = "processing_message")
     private String processingMessage;
 
     public ContentType getContentType() {

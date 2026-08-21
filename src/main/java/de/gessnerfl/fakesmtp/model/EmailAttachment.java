@@ -16,7 +16,8 @@ public class EmailAttachment {
     @JoinColumn(name="email")
     private Email email;
 
-    @Column(name="filename", nullable = false, length = 1024)
+    @Lob
+    @Column(name="filename", nullable = false)
     @Basic(optional = false)
     private String filename;
 
@@ -30,7 +31,8 @@ public class EmailAttachment {
     @Basic(optional = false)
     private EmailPartProcessingStatus processingStatus = EmailPartProcessingStatus.AVAILABLE;
 
-    @Column(name = "processing_message", length = 1024)
+    @Lob
+    @Column(name = "processing_message")
     private String processingMessage;
 
     public Long getId() {

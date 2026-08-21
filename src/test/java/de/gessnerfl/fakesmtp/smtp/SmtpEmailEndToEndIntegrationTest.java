@@ -12,6 +12,7 @@ import de.gessnerfl.fakesmtp.repository.EmailAttachmentRepository;
 import de.gessnerfl.fakesmtp.repository.EmailContentRepository;
 import de.gessnerfl.fakesmtp.repository.EmailInlineImageRepository;
 import de.gessnerfl.fakesmtp.repository.EmailRepository;
+import de.gessnerfl.fakesmtp.smtp.client.SmartClient;
 import de.gessnerfl.fakesmtp.smtp.server.SmtpServer;
 import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
@@ -38,10 +39,9 @@ import org.springframework.web.client.RestTemplate;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.Base64;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -87,8 +87,6 @@ class SmtpEmailEndToEndIntegrationTest {
     private RestTemplate restTemplate;
     private ObjectMapper objectMapper;
 
-    private int emailCounter = 0;
-
     @BeforeEach
     void setUp() {
         restTemplate = new RestTemplate();
@@ -99,7 +97,6 @@ class SmtpEmailEndToEndIntegrationTest {
 
         clearEmailData();
 
-        emailCounter = 0;
     }
 
     @AfterEach
@@ -286,7 +283,69 @@ class SmtpEmailEndToEndIntegrationTest {
         assertThat(receivedEmail.getPlainContent().get().getData(), containsString(specialBody));
     }
 
+    @Test
+    void shouldPersistRapidSequenceWithLongMessageIdsWithoutCreatingSequenceGaps() throws Exception {
+        int messageCount = 50;
+        String uniqueToken = String.valueOf(System.currentTimeMillis());
+        String subjectPrefix = "Rapid long Message-ID " + uniqueToken + " ";
+        var expectedSubjects = new ArrayList<String>(messageCount);
+        var expectedMessageIds = new ArrayList<String>(messageCount);
+
+        var client = new SmartClient("localhost", smtpServer.getPort(), "localhost");
+        try {
+            for (int index = 0; index < messageCount; index++) {
+                String subject = subjectPrefix + index;
+                String messageId = "<" + index + "-" + "a".repeat(512) + "@example.com>";
+                expectedSubjects.add(subject);
+                expectedMessageIds.add(messageId);
+                sendRawTextEmail(client, subject, messageId);
+            }
+        } finally {
+            client.quit();
+        }
+
+        await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+            long persistedSequenceSize = emailRepository.findAll().stream()
+                    .filter(email -> email.getSubject().startsWith(subjectPrefix))
+                    .count();
+            assertEquals(messageCount, persistedSequenceSize);
+        });
+
+        var persistedEmails = emailRepository.findAll().stream()
+                .filter(email -> email.getSubject().startsWith(subjectPrefix))
+                .sorted((left, right) -> Long.compare(left.getId(), right.getId()))
+                .toList();
+
+        for (int index = 0; index < messageCount; index++) {
+            Email persistedEmail = persistedEmails.get(index);
+            assertEquals(expectedSubjects.get(index), persistedEmail.getSubject());
+            assertEquals(expectedMessageIds.get(index), persistedEmail.getMessageId().orElseThrow());
+            if (index > 0) {
+                assertEquals(persistedEmails.get(index - 1).getId() + 1, persistedEmail.getId());
+            }
+        }
+    }
+
     // Helper methods for sending emails
+
+    private void sendRawTextEmail(SmartClient client, String subject, String messageId) throws IOException {
+        client.from(FROM_ADDRESS);
+        client.to(TO_ADDRESS);
+        client.dataStart();
+        String rawMessage = """
+                From: %s
+                To: %s
+                Subject: %s
+                Message-ID: %s
+                Content-Type: text/plain; charset=utf-8
+
+                %s
+                """.formatted(FROM_ADDRESS, TO_ADDRESS, subject, messageId, BODY_TEXT)
+                .replace("\n", "\r\n");
+        byte[] messageData = rawMessage.getBytes(StandardCharsets.UTF_8);
+        client.dataWrite(messageData, messageData.length);
+        client.dataEnd();
+    }
 
     private void sendTextEmail(String from, String to, String subject, String body) throws MessagingException {
         Properties props = getMailProperties();
@@ -386,7 +445,8 @@ class SmtpEmailEndToEndIntegrationTest {
         String url = "http://localhost:" + serverPort + "/api/emails";
         ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
         assertEquals(200, response.getStatusCode().value());
-        return objectMapper.readValue(response.getBody(), new TypeReference<RestResponsePage<Email>>() {});
+        return objectMapper.readValue(response.getBody(), new TypeReference<RestResponsePage<Email>>() {
+        });
     }
 
     private byte[] fetchAttachmentFromApi(Long emailId, Long attachmentId) {

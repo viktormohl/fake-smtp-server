@@ -6,10 +6,12 @@ import jakarta.persistence.*;
 @Table(name = "email_inline_image")
 @SequenceGenerator(name = "email_part_generator", sequenceName = "email_inline_image_sequence", allocationSize = 1)
 public class InlineImage extends EmailPart {
-    @Column(name = "content_id", length = 255, nullable = false)
+    @Lob
+    @Column(name = "content_id", nullable = false)
     @Basic(optional = false)
     private String contentId;
 
+    @Lob
     @Column(name = "content_type", nullable = false)
     @Basic(optional = false)
     private String contentType;
@@ -19,7 +21,8 @@ public class InlineImage extends EmailPart {
     @Basic(optional = false)
     private EmailPartProcessingStatus processingStatus = EmailPartProcessingStatus.AVAILABLE;
 
-    @Column(name = "processing_message", length = 1024)
+    @Lob
+    @Column(name = "processing_message")
     private String processingMessage;
 
     public String getContentId() {

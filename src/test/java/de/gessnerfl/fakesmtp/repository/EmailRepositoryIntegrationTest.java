@@ -180,6 +180,54 @@ class EmailRepositoryIntegrationTest {
                 .toList(), hasSize(1));
     }
 
+    @Test
+    void shouldPersistLongUntrustedEmailMetadataWithoutTruncation() {
+        String longValue = "x".repeat(2048);
+
+        var content = new EmailContent();
+        content.setContentType(ContentType.PLAIN);
+        content.setData("Test Content");
+        content.setProcessingMessage(longValue);
+
+        var attachment = new EmailAttachment();
+        attachment.setFilename(longValue);
+        attachment.setData("Attachment data".getBytes(StandardCharsets.UTF_8));
+        attachment.setProcessingMessage(longValue);
+
+        var inlineImage = new InlineImage();
+        inlineImage.setContentId(longValue);
+        inlineImage.setContentType(longValue);
+        inlineImage.setData(Base64.getEncoder().encodeToString("fake-image-data".getBytes(StandardCharsets.UTF_8)));
+        inlineImage.setProcessingMessage(longValue);
+
+        var email = new Email();
+        email.setSubject("Long metadata");
+        email.setRawData("Test Content");
+        email.setReceivedOn(ZonedDateTime.now(ZoneId.of("UTC")));
+        email.setFromAddress(longValue);
+        email.setToAddress(longValue);
+        email.setMessageId(longValue);
+        email.addContent(content);
+        email.addAttachment(attachment);
+        email.addInlineImage(inlineImage);
+
+        Email savedEmail = sut.saveAndFlush(email);
+        entityManager.clear();
+
+        Email reloadedEmail = sut.findById(savedEmail.getId()).orElseThrow();
+        assertAll(
+                () -> assertEquals(longValue, reloadedEmail.getFromAddress()),
+                () -> assertEquals(longValue, reloadedEmail.getToAddress()),
+                () -> assertEquals(longValue, reloadedEmail.getMessageId().orElseThrow()),
+                () -> assertEquals(longValue, reloadedEmail.getContents().getFirst().getProcessingMessage()),
+                () -> assertEquals(longValue, reloadedEmail.getAttachments().getFirst().getFilename()),
+                () -> assertEquals(longValue, reloadedEmail.getAttachments().getFirst().getProcessingMessage()),
+                () -> assertEquals(longValue, reloadedEmail.getInlineImages().getFirst().getContentId()),
+                () -> assertEquals(longValue, reloadedEmail.getInlineImages().getFirst().getContentType()),
+                () -> assertEquals(longValue, reloadedEmail.getInlineImages().getFirst().getProcessingMessage())
+        );
+    }
+
     private Email createRandomEmail(int minusMinutes) {
         var randomToken = RandomStringUtils.insecure().nextAlphanumeric(6);
         var receivedOn = ZonedDateTime.now(ZoneId.of("UTC")).minusMinutes(minusMinutes);
