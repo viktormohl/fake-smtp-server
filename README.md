@@ -458,8 +458,8 @@ If you need to implement a new feature, you will probably need an correct JDK ve
 > [!NOTE]
 > **Build Requirements:**
 > - Java 25 (JDK)
-> - Node.js 24.13.1 (LTS)
-> - npm 11.8.0
+> - Node.js 24.22.3 (LTS)
+> - npm 11.19.1
 
 ```sh
 sh/dev

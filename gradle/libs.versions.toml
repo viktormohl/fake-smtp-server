@@ -1,26 +1,26 @@
 [versions]
 # Plugins
-axion-release = "1.21.1"
-spring-boot = "4.0.5"
-sonarqube = "7.2.3.7755"
-jib = "3.5.3"
+axion-release = "1.21.5"
+spring-boot = "4.1.3"
+sonarqube = "7.6.0.18749"
+jib = "3.5.4"
 node-gradle = "7.1.0"
-ben-manes-versions = "0.53.0"
+ben-manes-versions = "0.67.0"
 
 # Java
 java = "25"
 
 # Node.js (LTS)
-nodejs = "24.14.1"
-npmVersion = "11.11.0"
+nodejs = "24.22.3"
+npmVersion = "11.19.1"
 
 # Docker Base Image
 # Using BellSoft Liberica JDK with Alpaquita Linux (musl) - optimized for cloud-native Java
 docker-base-image = "bellsoft/liberica-runtime-container:jdk-25-slim-musl"
 
 # Third-party libraries
-commons-io = "2.21.0"
-springdoc-openapi = "3.0.3"
+commons-io = "2.22.0"
+springdoc-openapi = "3.2.1"
 
 [libraries]
 # Spring Boot Starters
@@ -60,4 +60,4 @@ spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
 sonarqube = { id = "org.sonarqube", version.ref = "sonarqube" }
 jib = { id = "com.google.cloud.tools.jib", version.ref = "jib" }
 node-gradle = { id = "com.github.node-gradle.node", version.ref = "node-gradle" }
-ben-manes-versions = { id = "com.github.ben-manes.versions", version.ref = "ben-manes-versions" }
+ben-manes-versions = { id = "io.github.ben-manes.versions", version.ref = "ben-manes-versions" }
