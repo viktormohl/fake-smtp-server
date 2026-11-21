@@ -16,7 +16,8 @@ public class EmailAttachment {
     @JoinColumn(name="email")
     private Email email;
 
-    @Column(name="filename", nullable = false, length = 1024)
+    @Lob
+    @Column(name="filename", nullable = false)
     @Basic(optional = false)
     private String filename;
 
@@ -24,6 +25,15 @@ public class EmailAttachment {
     @Column(name="data", nullable = false)
     @Basic(optional = false)
     private byte[] data;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "processing_status", nullable = false, length = 64)
+    @Basic(optional = false)
+    private EmailPartProcessingStatus processingStatus = EmailPartProcessingStatus.AVAILABLE;
+
+    @Lob
+    @Column(name = "processing_message")
+    private String processingMessage;
 
     public Long getId() {
         return id;
@@ -56,5 +66,21 @@ public class EmailAttachment {
 
     public void setData(byte[] data) {
         this.data = data;
+    }
+
+    public EmailPartProcessingStatus getProcessingStatus() {
+        return processingStatus;
+    }
+
+    public void setProcessingStatus(EmailPartProcessingStatus processingStatus) {
+        this.processingStatus = processingStatus;
+    }
+
+    public String getProcessingMessage() {
+        return processingMessage;
+    }
+
+    public void setProcessingMessage(String processingMessage) {
+        this.processingMessage = processingMessage;
     }
 }

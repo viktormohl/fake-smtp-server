@@ -7,19 +7,24 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
 import de.gessnerfl.fakesmtp.config.SmtpCommandConfig;
-import de.gessnerfl.fakesmtp.smtp.RejectException;
-import de.gessnerfl.fakesmtp.smtp.client.SMTPException;
-import de.gessnerfl.fakesmtp.smtp.client.SmartClient;
-
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import de.gessnerfl.fakesmtp.smtp.MessageContext;
 import de.gessnerfl.fakesmtp.smtp.MessageHandler;
 import de.gessnerfl.fakesmtp.smtp.MessageHandlerFactory;
+import de.gessnerfl.fakesmtp.smtp.RejectException;
+import de.gessnerfl.fakesmtp.smtp.client.SMTPException;
+import de.gessnerfl.fakesmtp.smtp.client.SmartClient;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.*;
 
@@ -27,6 +32,7 @@ import static org.mockito.Mockito.*;
  * This class tests whether the event handler methods defined in MessageHandler
  * are called at the appropriate times and in good order.
  */
+@ExtendWith(OutputCaptureExtension.class)
 class MessageHandlerTest {
 	@Mock
 	private MessageHandlerFactory messageHandlerFactory;
@@ -128,6 +134,24 @@ class MessageHandlerTest {
 		verify(messageHandler2).data(any(InputStream.class));
 		verify(messageHandler2).done();
 		verifyNoMoreInteractions(messageHandlerFactory, messageHandler, messageHandler2);
+	}
+
+	@Test
+	void testDataRejectionIsLogged(CapturedOutput output) throws Exception {
+		when(messageHandlerFactory.create(any(MessageContext.class))).thenReturn(messageHandler);
+		doThrow(new RejectException(554, "Test DATA rejected")).when(messageHandler).data(any(InputStream.class));
+
+		final SmartClient client = new SmartClient("localhost", smtpServer.getPort(), "localhost");
+		client.from("john@example.com");
+		client.to("jane@example.com");
+		client.dataStart();
+		client.dataWrite("body".getBytes(StandardCharsets.US_ASCII), 4);
+
+		assertThrows(SMTPException.class, client::dataEnd);
+		client.quit();
+
+		assertThat(output.getAll(), containsString("Rejected SMTP message"));
+		assertThat(output.getAll(), containsString("554 Test DATA rejected"));
 	}
 
 	/**
